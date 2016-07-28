@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{%block content%}
+
+<title>{{tabletitle}}</title>
+<style>
+#container {
+  width: 1200px;
+  margin: 0 auto;
+}
+#title {
+  text-align: center;
+  font-family: ;
+  font-size: 60px;
+  font-weight: 300;
+  margin: 30px;
+}
+#tablecontainer {
+  width: 1200px;
+  overflow-x:scroll;
+}
+table {
+  width: 1200px;
+  border-collapse: collapse;
+  text-align: center;
+  border: none;
+}
+th, td {
+  padding: 5px;
+}
+th {
+  height: 50px;
+  background-color: #4CAF50;
+  color: white;
+}
+tr {
+  border-bottom: 1px solid black;
+}
+tr:nth-child(even) {
+  background-color: #f2f2f2
+}
+tr:not(:first-child):hover {
+    background-color: #cccccc;
+}
+.chooser {
+  width: 120px;
+  height: 30px;
+  background: white;
+  border-radius: 15px;
+  margin: 10px auto;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+.chooser .option {
+  float: left;
+  color: #333333;
+  line-height: 30px;
+  font-size: 10px;
+  width: 30px;
+  cursor: pointer;
+}
+.chooser .option:hover {
+  background: #cccccc;
+}
+.chooser .option.selected {
+  background: #aaaaaa;
+}
+</style>
+
+<div id = "container">
+
+<div id = "title">{{tabletitle}}</div>
+
+<div id = "tablecontainer">
+
+<table>
+<tr>
+{%for title in coltitles%}
+<th>
+{{title.name}}
+{% if title.plottable %}
+<div class = "chooser">
+<div class = "option hist {{title.oname}}" data-type = "hist" data-column = "{{title.oname}}">Hist</div>
+<div class = "option cf {{title.oname}}" data-type = "cf" data-column = "{{title.oname}}">CF</div>
+<div class = "option x {{title.oname}}" data-type = "x" data-column = "{{title.oname}}">x</div>
+<div class = "option y {{title.oname}}" data-type = "y" data-column = "{{title.oname}}">y</div>
+</div>
+</th>
+{% endif %}
+
+{%endfor%}
+</tr>
+{% for row in rows %}
+<tr>
+{% for item in row %}
+<td>{{ item }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</table>
+
+</div>
+</div>
+
+<script src = "/static/jquery.js"></script>
+<script>
+
+tableName = "{{tablename}}"
+
+$(".chooser .option").click(function() {
+  type = $(this).attr("data-type")
+  column = $(this).attr("data-column")
+  if (type == "hist") {
+    window.location = "../showplot/?type=hist&table=" + tableName + "&col=" + column
+  }
+  else if (type == "cf") {
+    window.location = "../showplot/?type=cf&table=" + tableName + "&col=" + column
+  }
+  // Those cases were easy! now for the hard stuff...
+  else {
+    if (type == "x") {other = "y"}
+    else {other = "x"}
+    console.log(other)
+    hasclass = $(this).hasClass("selected")
+    $(".option." + column + "." + other).toggleClass("selected", false)
+    $(".option." + type).toggleClass("selected", false)
+    $(this).toggleClass("selected", !hasclass)
+
+
+    if ($(".option.selected").length == 2) {
+      x = $(".option.selected.x").attr("data-column")
+      y = $(".option.selected.y").attr("data-column")
+      $(".option").toggleClass("selected", false) // Hack for firefox
+      window.location = "../showplot/?type=scatter&table=" + tableName + "&x=" + x + "&y=" + y
+    }
+  }
+})
+</script>
+{%endblock%}

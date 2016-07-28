@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{%block content%}
+
+<title>Plotty McPlotface</title>
+
+<style>
+#plot-container {
+  position: absolute;
+  left: 50%;
+  margin-left: -550px;
+  width: 640px;
+  height: 480px;
+}
+#corrcoef {
+  text-align: center;
+  font-size: 14pt;
+  font-family: sans;
+  margin-top:50px;
+  position: absolute;
+  top: 550px;
+  left: 50%;
+  width: 400px;
+  margin-left: -200px;
+}
+#plot-controls {
+  position: absolute;
+  left: 50%;
+  margin-top: 35px;
+  margin-left: 70px;
+  width: 400px;
+  height: 400px;
+  background: #cfcfcf;
+  border-radius: 10px;
+  text-align: center;
+  padding-top: 10px;
+}
+#control-title {
+  font-size: 25px;
+  margin-bottom: 20px;
+  margin-top: 10px;
+}
+</style>
+<div id = "container">
+<div id = "plot-container">
+  {% autoescape off %}
+    {{plot}}
+  {% endautoescape %}
+</div>
+
+<div id = "plot-controls">
+<div id = "control-title">Plot Controls</div>
+{%block controls %}Beep boop boop{% endblock %}
+</div>
+
+{%block corrcoeff %}{%endblock%}
+
+{%endblock%}
+</div>

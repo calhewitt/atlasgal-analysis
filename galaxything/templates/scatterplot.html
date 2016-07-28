@@ -1,0 +1,27 @@
+{%extends "plot.html" %}
+
+{%block corrcoeff%}
+<div id = "corrcoef">
+Correlation Coefficient: {{ r }}
+</div>
+{%endblock%}
+
+{% block controls %}
+
+<form action = "">
+<!-- get params we already have... -->
+<input type = "hidden" name = "type" value = "">
+<input type = "hidden" name = "table" value = "">
+<input type = "hidden" name = "x" value = "">
+<input type = "hidden" name = "y" value = "">
+<!-- end -->
+<div style = "margin-bottom: 5px">Axis scales:</div>
+x: <input type = "radio" name = "xscale" value = "linear">Linear</input>
+<input type = "radio" name = "xscale" value = "log">Log</input><span style = "margin-left: 30px;"></span>
+y: <input type = "radio" name = "yscale" value = "linear">Linear</input>
+<input type = "radio" name = "yscale" value = "log">Log</input>
+<br><br>
+<input type = "submit" value = "Update plot">
+</form>
+
+{% endblock %}

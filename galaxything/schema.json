@@ -1,0 +1,19 @@
+{
+  "columns": {
+    "atlas_name": ["Source Name", null, false],
+    "gal_long_peak": ["Peak Longitude", "DEG", true],
+    "gal_lat_peak": ["Peak Latitude", "DEG", true],
+    "gal_long_centre": ["Centre Longitude", "DEG", true],
+    "gal_lat_centre": ["Centre Latitude", "DEG", true],
+    "major": ["Semi-Major", "\"", true],
+    "minor": ["Semi-Minor", "\"", true],
+    "pa": ["PA", "DEG", true],
+    "effective_radius": ["Effective Radius", "\"", true],
+    "peak_flux": ["Peak Flux", "Jy/beam", true],
+    "peak_flux_error": ["Peak Flux Error", "Jy/beam", false],
+    "int_flux": ["Integrated Flux", "Jy", true],
+    "int_flux_error": ["Integrated Flux Error", "Jy", false],
+    "flags": ["Flag", null, false],
+    "SNR": ["Weight SNR", null, true]
+  }
+}

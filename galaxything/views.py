@@ -104,7 +104,7 @@ def scatter(request):
     # Read the specified columns from the table
     c = connection.cursor()
     try:
-        c.execute("SELECT " + scrub(x_col) + ", " + scrub(y_col) + " FROM " + scrub(table))
+        c.execute("SELECT " + scrub(x_col) + ", " + scrub(y_col) + " FROM " + scrub(table) + " LIMIT 1000")
     except OperationalError:
         return error("Invalid table or column name")
     data = c.fetchall()
@@ -196,7 +196,7 @@ def cf(request):
     fig = plt.figure(1)
     fig.clear()
     ax = fig.add_subplot(111)
-    n,bins,patches = plt.hist(xvals, len(xvals), histtype='step', cumulative=True)
+    n,bins,patches = plt.hist(xvals, 100, histtype='step', cumulative=True)
     patches[0].set_xy(patches[0].get_xy()[:-1])
 
     plot_html = mpld3.fig_to_html(fig)

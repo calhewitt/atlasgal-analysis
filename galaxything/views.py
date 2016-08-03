@@ -12,13 +12,20 @@ import numpy as np
 import os
 import json
 import random
+import sys
 
 SCHEMA = json.loads(open(os.path.dirname(os.path.abspath(__file__)) + "/schema.json").read())
 
 # Helper functions
 
 def scrub(string):
-    return ''.join( chr for chr in string.strip() if chr.isalnum() or chr in "_-<>. " )
+    return ''.join( chr for chr in string.strip() if chr.isalnum() or chr in "_-<>., " )
+
+def getfilter(request):
+    _filter = ""
+    if "filter" in request.GET:
+        _filter = request.GET['filter']
+    return _filter
 
 def error(text):
     t = get_template('error.html')
@@ -39,7 +46,7 @@ def fromwords(symbol):
 def parse_filter(filtertext):
     try:
         result = "WHERE "
-        for part in filtertext.split(";"):
+        for part in filtertext.split(",,"):
             terms = part.split(",")
             result += (terms[0] + " ")
             result += (fromwords(terms[1]) + " ")
@@ -52,28 +59,40 @@ def parse_filter(filtertext):
     except:
         return ""
 
+def parse_table(text):
+    # Do inner joins!
+    parts = text.split(",")
+    if len(parts) == 1:
+        return parts[0]
+    if len(parts) == 2:
+        if parts[0] == "atlasgal_full_csc_16oct14" and parts[1] == "cal_vlsr_distances":
+            return "atlasgal_full_csc_16oct14 INNER JOIN cal_vlsr_distances on atlas_name = csc_name"
+    return text
 
 def get_data(request): # TODO make this work for not just scatter plots!!
     # Parse GET params
-    if not "table" in request.GET or not "x" in request.GET or not "y" in request.GET:
+    if not "table" in request.GET or not "cols" in request.GET:
         raise Exception("Missing parameters (table, x, and y must all be supplied)")
 
     table = request.GET['table']
-    x_col = request.GET['x']
-    y_col = request.GET['y']
+    cols = request.GET['cols']
 
     if "filter" in request.GET:
         _filter = parse_filter(request.GET['filter'])
     else:
         _filter = ""
 
+    query = "SELECT " + scrub(cols) + " FROM " + parse_table(scrub(table)) + " " + _filter + " LIMIT 1000"
+
+    sys.stdout.write(query)
+
     # Read the specified columns from the table
     c = connection.cursor()
-    c.execute("SELECT " + scrub(x_col) + ", " + scrub(y_col) + " FROM " + scrub(table) + " " + _filter + " LIMIT 1000")
+    c.execute(query)
     data = c.fetchall()
     filtered_data = []
     for datum in data:
-        if not -999 in datum:
+        if not (-999 in datum or None in datum):
             filtered_data.append(datum)
     return filtered_data
 
@@ -93,9 +112,15 @@ def showtable(request):
 
     table = scrub(request.GET['table'])
 
+    _filter = ""
+    filtertext = ""
+    if "filter" in request.GET:
+        filtertext = request.GET['filter']
+        _filter = parse_filter(request.GET['filter'])
+
     c = connection.cursor()
     try:
-        c.execute("SELECT * FROM " + table + " LIMIT 1000")
+        c.execute("SELECT * FROM " + parse_table(table) + " " + _filter + " LIMIT 1000")
     except OperationalError:
         return error("Bad table name")
     rows = c.fetchall()
@@ -112,7 +137,7 @@ def showtable(request):
             new_col_titles.append({"name": title, "oname": title, "unit": None, "plottable:": False})
 
     # Find the proper title given to the table
-    c.execute("SELECT title FROM tables WHERE name = ?", (table,))
+    c.execute("SELECT title FROM tables WHERE name = ?", (table.split(",")[0],))
     title = c.fetchone()
     if not title:
         title = table
@@ -120,7 +145,7 @@ def showtable(request):
         title = title[0]
 
     t = get_template('showtable.html')
-    html = t.render(Context({"rows": rows, "coltitles": new_col_titles, "tablename": table, "tabletitle": title}))
+    html = t.render(Context({"rows": rows, "coltitles": new_col_titles, "tablename": table, "tabletitle": title, "filter": filtertext}))
 
     return HttpResponse(html)
 
@@ -155,19 +180,16 @@ def scatter_page(request):
     xvals, yvals = zip(*data)
     r = np.corrcoef(xvals, yvals)[1,0]
 
-    _filter = ""
-    if "filter" in request.GET:
-        _filter = request.GET['filter']
+    plot_url = "../plot/" + request.get_full_path().split("/")[-1]
 
-    plot_url = "../plot/?type=scatter&x=" + request.GET['x'] + "&y=" + request.GET['y'] + "&table=" + request.GET['table'] + "&filter=" + _filter
-    c = Context({"ploturl": plot_url, "r": r, "x": request.GET['x'], "y": request.GET['y'], "table": request.GET['table']})
+    c = Context({"ploturl": plot_url, "r": r, "cols": request.GET['cols'], "table": request.GET['table'], "filter": getfilter(request)})
     return HttpResponse(get_template("scatterplot.html").render(c))
 
 def cf_page(request):
-    plot_url = "../plot/?type=cf&col=" + request.GET['col'] + "&table=" + request.GET['table']
+    plot_url = "../plot/" + request.get_full_path().split("/")[-1]
     return HttpResponse(get_template("cfplot.html").render(Context({"ploturl": plot_url})))
 def hist_page(request):
-    plot_url = "../plot/?type=hist&col=" + request.GET['col'] + "&table=" + request.GET['table']
+    plot_url = "../plot/" + request.get_full_path().split("/")[-1]
     return HttpResponse(get_template("histogram.html").render(Context({"ploturl": plot_url})))
 
 def plot(request):
@@ -190,18 +212,18 @@ def plot(request):
 
 
 def scatter(request):
+    c = connection.cursor()
     data = get_data(request)
 
     xvals, yvals = zip(*data)
 
     table = request.GET['table']
-    x_col = request.GET['x']
-    y_col = request.GET['y']
+    x_col, y_col = scrub(request.GET['cols']).split(",")
 
     fig = plt.figure(1)
     fig.clear()
     ax = fig.add_subplot(111)
-    plt.scatter(xvals, yvals)
+
     if "xlabel" in request.GET:
         ax.set_xlabel(request.GET['xlabel'])
     else:
@@ -216,6 +238,12 @@ def scatter(request):
     if "yscale" in request.GET:
         ax.set_yscale(request.GET['yscale'])
 
+    if "colours" in request.GET:
+        
+
+    plt.scatter(xvals, yvals)
+
+
     # Fit a line to the points
 
     def f(x, a, b):
@@ -226,6 +254,7 @@ def scatter(request):
     optf = lambda x: f(x, popt[0], popt[1])
     plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
 
+
     #ax.set_xlabel(request.GET['xlabel'])
     #ax.set_ylabel(request.GET['ylabel'])
 
@@ -234,25 +263,15 @@ def scatter(request):
     return HttpResponse(plot_html)
 
 def hist(request):
-    # Parse GET params
-    if not "table" in request.GET or not "col" in request.GET :
-        return error("Missing parameters (table and col must both be supplied)")
-
     nbins = 10
     if "nbins" in request.GET:
         if type(eval(request.GET['nbins'])) == int:
             nbins = int(request.GET['nbins'])
 
-    table = request.GET['table']
-    col = request.GET['col']
-
-    # Read the specified columns from the table
-    c = connection.cursor()
     try:
-        c.execute("SELECT " + scrub(col) + " FROM " + scrub(table))
-    except OperationalError:
-        return error("Invalid table or column name")
-    data = c.fetchall()
+        data = get_data(request)
+    except Exception, e:
+        return error(str(e))
 
     xvals = zip(*data)[0]
 

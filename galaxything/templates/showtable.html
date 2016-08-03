@@ -105,15 +105,16 @@ tr:not(:first-child):hover {
 <script>
 
 tableName = "{{tablename}}"
+filter = "{{filter}}"
 
 $(".chooser .option").click(function() {
   type = $(this).attr("data-type")
   column = $(this).attr("data-column")
   if (type == "hist") {
-    window.location = "../showplot/?type=hist&table=" + tableName + "&col=" + column
+    window.location = "../showplot/?type=hist&table=" + tableName + "&cols=" + column
   }
   else if (type == "cf") {
-    window.location = "../showplot/?type=cf&table=" + tableName + "&col=" + column
+    window.location = "../showplot/?type=cf&table=" + tableName + "&cols=" + column
   }
   // Those cases were easy! now for the hard stuff...
   else {
@@ -130,7 +131,7 @@ $(".chooser .option").click(function() {
       x = $(".option.selected.x").attr("data-column")
       y = $(".option.selected.y").attr("data-column")
       $(".option").toggleClass("selected", false) // Hack for firefox
-      window.location = "../showplot/?type=scatter&table=" + tableName + "&x=" + x + "&y=" + y
+      window.location = "../showplot/?type=scatter&table=" + tableName + "&cols=" + x + "," + y + "&filter=" + filter
     }
   }
 })

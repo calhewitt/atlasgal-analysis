@@ -14,6 +14,12 @@
     "int_flux": ["Integrated Flux", "Jy", true],
     "int_flux_error": ["Integrated Flux Error", "Jy", false],
     "flags": ["Flag", null, false],
-    "SNR": ["Weight SNR", null, true]
+    "SNR": ["Weight SNR", null, true],
+    "csc_id": ["CSC ID", null, false],
+    "cluster_name": ["Cluster Name", null, false],
+    "MSF_flag": ["MSF Flag", null, false],
+    "clump_vlsr": ["Clump VLSR", null, true],
+    "line_type": ["Line Type", null, false],
+    "distance": ["Distance", null, true]
   }
 }

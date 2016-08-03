@@ -2,7 +2,7 @@
 {%block content%}
 
 <title>Plotty McPlotface</title>
-
+<script src = "/static/jquery.js"></script>
 <style>
 #plot-container {
   position: absolute;
@@ -39,12 +39,17 @@
   margin-bottom: 20px;
   margin-top: 10px;
 }
+#plotframe {
+  width: 700px;
+  height: 500px;
+  overflow: hidden;
+  border: none;
+  outline: none;
+}
 </style>
 <div id = "container">
 <div id = "plot-container">
-  {% autoescape off %}
-    {{plot}}
-  {% endautoescape %}
+  <iframe src = "{{ploturl}}" id = "plotframe" name = "plotframe"></iframe>
 </div>
 
 <div id = "plot-controls">

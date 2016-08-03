@@ -8,20 +8,30 @@ Correlation Coefficient: {{ r }}
 
 {% block controls %}
 
-<form action = "">
+<form action = "../plot/" method = "GET" target = "plotframe">
 <!-- get params we already have... -->
-<input type = "hidden" name = "type" value = "">
-<input type = "hidden" name = "table" value = "">
-<input type = "hidden" name = "x" value = "">
-<input type = "hidden" name = "y" value = "">
+<input type = "hidden" name = "type" value = "scatter">
+<input type = "hidden" name = "table" value = "{{table}}">
+<input type = "hidden" name = "x" value = "{{x}}">
+<input type = "hidden" name = "y" value = "{{y}}">
+<input type = "hidden" name = "filter" value = "{{filter}}">
 <!-- end -->
 <div style = "margin-bottom: 5px">Axis scales:</div>
-x: <input type = "radio" name = "xscale" value = "linear">Linear</input>
+x: <input type = "radio" name = "xscale" value = "linear" checked="checked">Linear</input>
 <input type = "radio" name = "xscale" value = "log">Log</input><span style = "margin-left: 30px;"></span>
-y: <input type = "radio" name = "yscale" value = "linear">Linear</input>
+y: <input type = "radio" name = "yscale" value = "linear" checked="checked">Linear</input>
 <input type = "radio" name = "yscale" value = "log">Log</input>
 <br><br>
+
+x label: <input type = "text" name = "xlabel" value = "{{x}}"><br>
+y label: <input type = "text" name = "ylabel" value = "{{y}}"><br><br>
+
 <input type = "submit" value = "Update plot">
 </form>
+
+<script>
+baseUrl = "{{ploturl}}"
+console.log(baseUrl)
+</script>
 
 {% endblock %}

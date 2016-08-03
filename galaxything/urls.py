@@ -20,6 +20,7 @@ from galaxything.views import *
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^showplot/', showplot),
+    url(r'^plot/', plot),
     url(r'^showtable/', showtable),
     url(r'^$', picktable)
 ]

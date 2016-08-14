@@ -21,10 +21,17 @@ x: <input type = "radio" name = "xscale" value = "linear" checked="checked">Line
 y: <input type = "radio" name = "yscale" value = "linear" checked="checked">Linear</input>
 <input type = "radio" name = "yscale" value = "log">Log</input>
 <br><br>
-
+Colour Markers:
+<select name = "colours">
+<option value = "">None</option>
+  {%for col in all_cols%}
+<option value = "{{col}}">{{col}}</option>
+{%endfor%}
+</select>
+<br><br>
 x label: <input type = "text" name = "xlabel" value = "{{x}}"><br>
 y label: <input type = "text" name = "ylabel" value = "{{y}}"><br><br>
-
+Title: <input type = "text" name = "title" value = ""><br><br>
 <input type = "submit" value = "Update plot">
 </form>
 
@@ -34,3 +41,20 @@ console.log(baseUrl)
 </script>
 
 {% endblock %}
+
+{%block download%}
+<div id = "download">
+Download Plot:<br>
+<a href = "javascript:download('svg')">SVG</a>
+<a href = "javascript:download('eps')">EPS</a>
+<a href = "javascript:download('pdf')">PDF</a>
+<a href = "javascript:download('png')">PNG</a>
+</div>
+<script>
+function download(format) {
+  baseURL = document.getElementById("plotframe").contentWindow.location.href
+  baseURL += ("&download=" + format)
+  window.location = baseURL
+}
+</script>
+{%endblock%}

@@ -12,6 +12,8 @@ import numpy as np
 import os
 import json
 import random
+import time
+import StringIO
 import sys
 
 SCHEMA = json.loads(open(os.path.dirname(os.path.abspath(__file__)) + "/schema.json").read())
@@ -69,6 +71,9 @@ def parse_table(text):
             return "atlasgal_full_csc_16oct14 INNER JOIN cal_vlsr_distances on atlas_name = csc_name"
     return text
 
+def coolfilename(_format):
+    return "ATLASGAL-" + str(int(time.time())) + "." + _format
+
 def get_data(request): # TODO make this work for not just scatter plots!!
     # Parse GET params
     if not "table" in request.GET or not "cols" in request.GET:
@@ -82,7 +87,15 @@ def get_data(request): # TODO make this work for not just scatter plots!!
     else:
         _filter = ""
 
-    query = "SELECT " + scrub(cols) + " FROM " + parse_table(scrub(table)) + " " + _filter + " LIMIT 1000"
+    if "colours" in request.GET:
+        if request.GET['colours']:
+            colourcol = ", " + scrub(request.GET['colours'])
+        else:
+            colourcol = ""
+    else:
+        colourcol = ""
+
+    query = "SELECT " + scrub(cols) + colourcol + " FROM " + parse_table(scrub(table)) + " " + _filter + " LIMIT 1000"
 
     sys.stdout.write(query)
 
@@ -95,6 +108,12 @@ def get_data(request): # TODO make this work for not just scatter plots!!
         if not (-999 in datum or None in datum):
             filtered_data.append(datum)
     return filtered_data
+
+def get_columns(table):
+    c = connection.cursor()
+    c.execute("SELECT * FROM " + scrub(table) + " LIMIT 1")
+    col_titles = [description[0] for description in c.description]
+    return col_titles
 
 # Live views
 
@@ -168,6 +187,9 @@ def showplot(request):
 
     return error("")
 
+def random_colour():
+    return random.random()
+
 def scatter_page(request):
     try:
         data = get_data(request)
@@ -177,12 +199,17 @@ def scatter_page(request):
     if len(data) == 0:
         return error("No data matched those criteria!")
 
-    xvals, yvals = zip(*data)
+    xvals, yvals = zip(*data)[0:2]
     r = np.corrcoef(xvals, yvals)[1,0]
 
     plot_url = "../plot/" + request.get_full_path().split("/")[-1]
 
-    c = Context({"ploturl": plot_url, "r": r, "cols": request.GET['cols'], "table": request.GET['table'], "filter": getfilter(request)})
+    table = request.GET['table']
+    all_cols = get_columns(table)
+    x, y = request.GET['cols'].split(",")
+
+    c = Context({"ploturl": plot_url, "r": r, "cols": request.GET['cols'], "table": request.GET['table'], "filter": getfilter(request),
+        "x": x, "y": y, "table": table, "all_cols": all_cols})
     return HttpResponse(get_template("scatterplot.html").render(c))
 
 def cf_page(request):
@@ -212,10 +239,12 @@ def plot(request):
 
 
 def scatter(request):
+    interactive = False
+
     c = connection.cursor()
     data = get_data(request)
 
-    xvals, yvals = zip(*data)
+    xvals, yvals = zip(*data)[0:2]
 
     table = request.GET['table']
     x_col, y_col = scrub(request.GET['cols']).split(",")
@@ -235,32 +264,65 @@ def scatter(request):
 
     if "xscale" in request.GET:
         ax.set_xscale(request.GET['xscale'])
+        if request.GET['xscale'] != "linear":
+            interactive = False
     if "yscale" in request.GET:
         ax.set_yscale(request.GET['yscale'])
+        if request.GET['yscale'] != "linear":
+            interactive = False
 
     if "colours" in request.GET:
-        
+        if request.GET['colours'] != "":
+            used_colours = {}
+            colours = zip(*data)[2]
+            if isinstance(colours[0], str) or isinstance(colours[0], unicode):
+                c_array = []
+                for c in colours:
+                    if c in used_colours:
+                        c_array.append(used_colours[c])
+                    else:
+                        used_colours[c] = random_colour()
+                        c_array.append(used_colours[c])
+                plt.scatter(xvals, yvals, c=c_array, s=100, cmap=matplotlib.cm.jet)
+                plt.legend(handles = [matplotlib.patches.Patch(color=matplotlib.cm.jet(v), label=k) for k,v in used_colours.iteritems()])
+            else:
+                c_array = [float(i)/sum(colours) for i in colours]
+                sc = plt.scatter(xvals, yvals, c=c_array, s=100)
+                plt.colorbar(sc)
+        else:
+            plt.scatter(xvals,yvals)
 
-    plt.scatter(xvals, yvals)
+    else:
+        plt.scatter(xvals, yvals)
 
+    if "title" in request.GET:
+        if request.GET['title']:
+            plt.title(request.GET['title'])
 
     # Fit a line to the points
-
     def f(x, a, b):
         # Straight line
         return a*x + b
 
     popt, pcov = curve_fit(f, xvals, yvals)
     optf = lambda x: f(x, popt[0], popt[1])
-    plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
+    #plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
 
-
-    #ax.set_xlabel(request.GET['xlabel'])
-    #ax.set_ylabel(request.GET['ylabel'])
-
-    plot_html = mpld3.fig_to_html(fig)
-
-    return HttpResponse(plot_html)
+    if "download" in request.GET:
+        # Prepare the plot for download
+        _format = request.GET['download']
+        outfile = StringIO.StringIO()
+        plt.savefig(outfile, format=_format)
+        response = HttpResponse(outfile.getvalue(), content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(coolfilename(_format))
+        return response
+    elif interactive:
+        plot_html = mpld3.fig_to_html(fig)
+        return HttpResponse(plot_html)
+    else:
+        outfile = StringIO.StringIO()
+        plt.savefig(outfile, format="PNG", figsize=(8, 6), dpi=80)
+        return HttpResponse(outfile.getvalue(), content_type="image/png")
 
 def hist(request):
     nbins = 10

@@ -30,7 +30,6 @@
   width: 400px;
   height: 400px;
   background: #cfcfcf;
-  border-radius: 10px;
   text-align: center;
   padding-top: 10px;
 }
@@ -46,6 +45,29 @@
   border: none;
   outline: none;
 }
+#download {
+  position: absolute;
+  top: 600px;
+  left: 50%;
+  margin-left: -300px;
+  width: 600px;
+  height: 80px;
+  font-size: 20px;
+  background-color: #cfcfcf;
+  text-align: center;
+  padding-top: 20px;
+}
+#download a{
+  color: black;
+  margin-left: 5px;
+  margin-right: 5px;
+  text-decoration: none;
+  color: #555555;
+  margin-top: 10px;
+}
+#download a:hover {
+  color: black;
+}
 </style>
 <div id = "container">
 <div id = "plot-container">
@@ -58,6 +80,8 @@
 </div>
 
 {%block corrcoeff %}{%endblock%}
+{%block download%}{%endblock%}
 
 {%endblock%}
+
 </div>

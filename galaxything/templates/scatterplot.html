@@ -16,10 +16,8 @@ Correlation Coefficient: {{ r }}
 <input type = "hidden" name = "filter" value = "{{filter}}">
 <!-- end -->
 <div style = "margin-bottom: 5px">Axis scales:</div>
-x: <input type = "radio" name = "xscale" value = "linear" checked="checked">Linear</input>
-<input type = "radio" name = "xscale" value = "log">Log</input><span style = "margin-left: 30px;"></span>
-y: <input type = "radio" name = "yscale" value = "linear" checked="checked">Linear</input>
-<input type = "radio" name = "yscale" value = "log">Log</input>
+<input type = "radio" name = "scale" value = "linear" checked="checked">Linear</input>
+<input type = "radio" name = "scale" value = "log">Log</input><span style = "margin-left: 30px;"></span>
 <br><br>
 Colour Markers:
 <select name = "colours">
@@ -32,6 +30,12 @@ Colour Markers:
 x label: <input type = "text" name = "xlabel" value = "{{x}}"><br>
 y label: <input type = "text" name = "ylabel" value = "{{y}}"><br><br>
 Title: <input type = "text" name = "title" value = ""><br><br>
+Fit line:
+<select name = "fitline">
+<option value = "">None</option>
+<option value = "linear">Linear</option>
+</select><br><br>
+
 <input type = "submit" value = "Update plot">
 </form>
 

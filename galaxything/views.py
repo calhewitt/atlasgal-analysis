@@ -95,7 +95,7 @@ def get_data(request): # TODO make this work for not just scatter plots!!
     else:
         colourcol = ""
 
-    query = "SELECT " + scrub(cols) + colourcol + " FROM " + parse_table(scrub(table)) + " " + _filter + " LIMIT 1000"
+    query = "SELECT " + scrub(cols) + colourcol + " FROM " + parse_table(scrub(table)) + " " + _filter
 
     sys.stdout.write(query)
 
@@ -139,9 +139,9 @@ def showtable(request):
 
     c = connection.cursor()
     try:
-        c.execute("SELECT * FROM " + parse_table(table) + " " + _filter + " LIMIT 1000")
-    except OperationalError:
-        return error("Bad table name")
+        c.execute("SELECT * FROM " + parse_table(table) + " " + _filter + " LIMIT 100")
+    except Exception, e:
+        return error(str(e))
     rows = c.fetchall()
     col_titles = [description[0] for description in c.description]
     new_col_titles = []
@@ -164,7 +164,11 @@ def showtable(request):
         title = title[0]
 
     t = get_template('showtable.html')
-    html = t.render(Context({"rows": rows, "coltitles": new_col_titles, "tablename": table, "tabletitle": title, "filter": filtertext}))
+    if filtertext == "":
+        filters = None
+    else:
+        filters = [parse_filter(filtertext)]
+    html = t.render(Context({"rows": rows, "coltitles": new_col_titles, "tablename": table, "tabletitle": title, "filter": filtertext, "filters": filters}))
 
     return HttpResponse(html)
 
@@ -262,13 +266,10 @@ def scatter(request):
     else:
         ax.set_ylabel(y_col)
 
-    if "xscale" in request.GET:
-        ax.set_xscale(request.GET['xscale'])
-        if request.GET['xscale'] != "linear":
-            interactive = False
-    if "yscale" in request.GET:
-        ax.set_yscale(request.GET['yscale'])
-        if request.GET['yscale'] != "linear":
+    if "scale" in request.GET:
+        ax.set_xscale(request.GET['scale'])
+        ax.set_yscale(request.GET['scale'])
+        if request.GET['scale'] != "linear":
             interactive = False
 
     if "colours" in request.GET:
@@ -283,10 +284,10 @@ def scatter(request):
                     else:
                         used_colours[c] = random_colour()
                         c_array.append(used_colours[c])
-                plt.scatter(xvals, yvals, c=c_array, s=100, cmap=matplotlib.cm.jet)
-                plt.legend(handles = [matplotlib.patches.Patch(color=matplotlib.cm.jet(v), label=k) for k,v in used_colours.iteritems()])
+                plt.scatter(xvals, yvals, c=c_array, s=100, cmap=matplotlib.cm.viridis)
+                plt.legend(handles = [matplotlib.patches.Patch(color=matplotlib.cm.viridis(v), label=k) for k,v in used_colours.iteritems()])
             else:
-                c_array = [float(i)/sum(colours) for i in colours]
+                c_array = colours
                 sc = plt.scatter(xvals, yvals, c=c_array, s=100)
                 plt.colorbar(sc)
         else:
@@ -299,14 +300,20 @@ def scatter(request):
         if request.GET['title']:
             plt.title(request.GET['title'])
 
-    # Fit a line to the points
-    def f(x, a, b):
-        # Straight line
-        return a*x + b
+    if "fitline" in request.GET:
+        # Set axis scales back to linear, FOR NOW
+        ax.set_xscale("linear")
+        ax.set_yscale("linear")
+        
+        if request.GET['fitline'] == "linear":
+            # Fit a line to the points
+            def f(x, a, b):
+                # Straight line
+                return a*x + b
 
-    popt, pcov = curve_fit(f, xvals, yvals)
-    optf = lambda x: f(x, popt[0], popt[1])
-    #plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
+            popt, pcov = curve_fit(f, xvals, yvals)
+            optf = lambda x: f(x, popt[0], popt[1])
+            plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
 
     if "download" in request.GET:
         # Prepare the plot for download

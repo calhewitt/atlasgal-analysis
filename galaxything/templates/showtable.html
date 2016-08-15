@@ -64,11 +64,47 @@ tr:not(:first-child):hover {
 .chooser .option.selected {
   background: #aaaaaa;
 }
+#filters {
+  width: 800px;
+  margin: 0 auto;
+  margin-bottom: 50px;
+}
+.filter {
+  width: 800px;
+  height: 50px;
+  text-align:center;
+  background: #cfcfcf;
+  line-height: 50px;
+}
 </style>
 
 <div id = "container">
 
 <div id = "title">{{tabletitle}}</div>
+
+<div id = "filters">
+{%for filter in filters%}
+<div class = "filter">{{filter}}</div>
+{%endfor%}
+<div class = "filter" id = "newfilter">
+  <form action = "" id = "newfilter-form">
+    <select name = "filter-column" id = "filter-column">
+      {%for col in coltitles%}
+        <option value = "{{col.oname}}">{{col.oname}}</option>
+      {%endfor%}
+    </select>
+    <select name = "operator" id = "filter-operator">
+      <option value = "gt">&gt;</option>
+      <option value = "lt">&lt;</option>
+        <option value = "between">between</option>
+    </select>
+    <input type = "text" name = "val1" id = "val1">
+    <input type = "text" name = "val2" id = "val2" style = "display:none">
+    <input type = "submit" value = "Add Filter">
+    <button onclick = "rmfilters()">Remove Filters</button>
+  </form>
+</div>
+</div>
 
 <div id = "tablecontainer">
 
@@ -102,6 +138,8 @@ tr:not(:first-child):hover {
 </div>
 
 <script src = "/static/jquery.js"></script>
+<script src = "/static/URI.js"></script>
+
 <script>
 
 tableName = "{{tablename}}"
@@ -135,5 +173,48 @@ $(".chooser .option").click(function() {
     }
   }
 })
+
+// filter adding
+$("#filter-operator").change(function() {
+  if ($(this).val() == "between") {
+    $("#val2").show()
+  }
+  else {
+    $("#val2").hide()
+  }
+})
+$("#newfilter-form").submit(function(e) {
+  e.preventDefault()
+  var filter = ""
+  filter += $("#filter-column").val()
+  filter += ","
+  filter += $("#filter-operator").val()
+  filter += ","
+  filter += $("#val1").val()
+  if ($("#val1").val() == "" || isNaN($("#val1").val())) {
+    return
+  }
+  if ($("#filter-operator").val() == "between") {
+    filter += ","
+    filter += $("#val2").val()
+    if ($("#val2").val() == "" || isNaN($("#val2").val())) {
+      return
+    }
+  }
+  params = URI(window.location.href).query(true)
+  if (params['filter'] == null) {
+    params['filter'] = filter
+  }
+  else {
+    params['filter'] += (",," + filter)
+  }
+  window.location = URI(window.location.href).query(params)
+})
+
+function rmfilters() {
+  params = URI(window.location.href).query(true)
+  params['filter'] = null
+  window.location = URI(window.location.href).query(params)
+}
 </script>
 {%endblock%}

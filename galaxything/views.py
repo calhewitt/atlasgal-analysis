@@ -212,7 +212,7 @@ def scatter_page(request):
     all_cols = get_columns(table)
     x, y = request.GET['cols'].split(",")
 
-    c = Context({"ploturl": plot_url, "r": r, "cols": request.GET['cols'], "table": request.GET['table'], "filter": getfilter(request),
+    c = Context({"ploturl": plot_url, "r": round(r,3), "cols": request.GET['cols'], "table": request.GET['table'], "filter": getfilter(request),
         "x": x, "y": y, "table": table, "all_cols": all_cols})
     return HttpResponse(get_template("scatterplot.html").render(c))
 
@@ -301,19 +301,21 @@ def scatter(request):
             plt.title(request.GET['title'])
 
     if "fitline" in request.GET:
-        # Set axis scales back to linear, FOR NOW
-        ax.set_xscale("linear")
-        ax.set_yscale("linear")
-        
-        if request.GET['fitline'] == "linear":
-            # Fit a line to the points
-            def f(x, a, b):
-                # Straight line
-                return a*x + b
 
-            popt, pcov = curve_fit(f, xvals, yvals)
-            optf = lambda x: f(x, popt[0], popt[1])
-            plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
+        if request.GET['fitline']:
+            # Set axis scales back to linear, FOR NOW
+            ax.set_xscale("linear")
+            ax.set_yscale("linear")
+
+            if request.GET['fitline'] == "linear":
+                # Fit a line to the points
+                def f(x, a, b):
+                    # Straight line
+                    return a*x + b
+
+                popt, pcov = curve_fit(f, xvals, yvals)
+                optf = lambda x: f(x, popt[0], popt[1])
+                plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
 
     if "download" in request.GET:
         # Prepare the plot for download

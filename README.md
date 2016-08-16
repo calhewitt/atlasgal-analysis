@@ -1,6 +1,6 @@
 # ATLASGAL Analysis
 
-A web application for making plots from ATLASGAL data
+A simple web application to make plots from the [ATLASGAL Source Catalogues](http://atlasgal.mpifr-bonn.mpg.de/cgi-bin/ATLASGAL_DATABASE.cgi)
 
 ## Installation
 
@@ -14,7 +14,7 @@ The system runs on Django, so an installation of Python 2.7 with the following d
 - numpy
 - mpld3
 
-With pip, these can be easily installed with the command
+These can all be easily installed using the Python package manager [pip](https://pip.pypa.io/en/stable/installing/). Just run the following command (depending on your system you may need root permissions).
 
 ```bash
 $ pip install django matplotlib scipy numpy mpld3
@@ -22,7 +22,7 @@ $ pip install django matplotlib scipy numpy mpld3
 
 ### 2. Get the Code
 
-Simply clone this repository:
+To download all of the code for the application, simply clone this repository into your working directory:
 
 ```bash
 $ git clone https://github.com/calhewitt/atlasgal-analysis
@@ -30,32 +30,39 @@ $ git clone https://github.com/calhewitt/atlasgal-analysis
 
 ### 3: Run it!
 
-To test the system, or whilst still in development, you can run a test server with the utility built into Django:
+To easily run the application in order to test it, or whilst making changes in development, you can use the test server built into Django. Move into the repository...
 
 ```bash
 $ cd atlasgal-analysis
+```
+
+... and start up the server...
+
+```
 $ python manage.py runserver
 ```
 
-This will start a server on port 8000 that can be accessed by localhost - to view the system, navigate to http://localhost:8000 in your browser.
+By default, the application will then be available on port 8000 of localhost - just navigate to [http://localhost:8000](http://localhost:8000).
 
-To start the server so that the system can be accessed by other computers on the network, use the command:
+Alternatively, the test server can be run so that the application is available to any other computer on the network, by running:
 
 ```bash
 $ python manage.py runserver 0.0.0.0:8000
 ```
 
+Then, just navigate to the same address, or from another machine, http://[your IP]:8000.
+
 ### 4: Installing on a server
 
-Like any Django application, the system can be configured to work with Apache using mod_wsgi - follow the instructions [here](https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/modwsgi/).
+Like any Django application, the application can be configured to work with an Apache server using mod_wsgi - follow the instructions [here](https://docs.djangoproject.com/en/1.10/howto/deployment/wsgi/modwsgi/).
 
 ## Database Configuration
 
 From this repository, the system is configured to use a test SQLite database, db.sqlite3.
 
-This can be changed to use a live MySQL server or similar by changing the configuration in settings.py to use a different database engine, and supplying the relevant server, username, and password using the instrucions [here](http://stackoverflow.com/questions/19189813/setting-django-up-to-use-mysql).
+This can be changed to use any other database - either a different SQLite file or different kind of database such as MySQL - by altering the configuration in settings.py.
 
-The configuration block currently reads:
+Change the configuration block which currently reads...
 
 ```python
 DATABASES = {
@@ -65,3 +72,5 @@ DATABASES = {
     }
 }
 ```
+
+... to use the new database, following the instructions [here](http://stackoverflow.com/questions/19189813/setting-django-up-to-use-mysql).

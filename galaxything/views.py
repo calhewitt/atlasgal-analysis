@@ -303,19 +303,11 @@ def scatter(request):
     if "fitline" in request.GET:
 
         if request.GET['fitline']:
-            # Set axis scales back to linear, FOR NOW
-            ax.set_xscale("linear")
-            ax.set_yscale("linear")
-
-            if request.GET['fitline'] == "linear":
-                # Fit a line to the points
-                def f(x, a, b):
-                    # Straight line
-                    return a*x + b
-
-                popt, pcov = curve_fit(f, xvals, yvals)
-                optf = lambda x: f(x, popt[0], popt[1])
-                plt.plot([min(xvals), max(xvals)], [optf(min(xvals)), optf(max(xvals))], 'r-')
+            degree = int(request.GET['fitline'])
+            poly = list(reversed(np.polyfit(xvals, yvals, degree)))
+            xs = np.linspace(min(xvals), max(xvals), 300)
+            ys= np.polynomial.polynomial.polyval(xs, poly)
+            plt.plot(xs,ys,'r-')
 
     if "download" in request.GET:
         # Prepare the plot for download

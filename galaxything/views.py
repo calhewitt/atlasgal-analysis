@@ -388,6 +388,4 @@ def cf(request):
     n,bins,patches = plt.hist(xvals, 50, histtype='step', cumulative=True)
     patches[0].set_xy(patches[0].get_xy()[:-1])
 
-    plot_html = mpld3.fig_to_html(fig)
-
-    return HttpResponse(plot_html)
+    return serve(request, False)

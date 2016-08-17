@@ -156,7 +156,7 @@ def showtable(request):
             new_col_titles.append({"name": title, "oname": title, "unit": None, "plottable:": False})
 
     # Find the proper title given to the table
-    c.execute("SELECT title FROM tables WHERE name = ?", (table.split(",")[0],))
+    c.execute("SELECT title FROM tables WHERE name = ?", (table,))
     title = c.fetchone()
     if not title:
         title = table

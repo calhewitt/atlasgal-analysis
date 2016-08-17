@@ -6,7 +6,7 @@ A simple web application to make plots from the [ATLASGAL Source Catalogues](htt
 
 ### 1. Install Dependencies
 
-The system runs on Django, so an installation of Python 2.7 with the following dependencies is required:
+The system runs on Django, so a clean installation of Python 2.7, and the pip package manager, with the following dependencies is required:
 
 - django
 - matplotlib

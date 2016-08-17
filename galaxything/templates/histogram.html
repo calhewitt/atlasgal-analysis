@@ -1,1 +1,23 @@
 {% extends "plot.html" %}
+
+
+{%block controls%}
+<form action = "../plot/" method = "GET" target = "plotframe">
+<!-- get params we already have... -->
+<input type = "hidden" name = "type" value = "hist">
+<input type = "hidden" name = "table" value = "{{table}}">
+<input type = "hidden" name = "cols" value = "{{cols}}">
+<input type = "hidden" name = "filter" value = "{{filter}}">
+
+Number of bins: <input type = "number" name = "nbins" value = "10"><br><br>
+Axis Scales:
+<input type = "radio" name = "scale" value = "linear" checked="checked">Linear</input>
+<input type = "radio" name = "scale" value = "log">Log</input><span style = "margin-left: 30px;"></span><br><br>
+Title: <input type = "text" name = "title"><br><br>
+x label: <input type = "text" name = "xlabel" value = "{{x}}"><br>
+y label: <input type = "text" name = "ylabel" value = "{{y}}"><br><br>
+<input type = "submit" value = "Update plot">
+
+</form>
+
+{%endblock%}

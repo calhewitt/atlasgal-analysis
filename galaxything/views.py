@@ -194,6 +194,23 @@ def showplot(request):
 def random_colour():
     return random.random()
 
+def serve(request, interactive):
+    if "download" in request.GET:
+        # Prepare the plot for download
+        _format = request.GET['download']
+        outfile = StringIO.StringIO()
+        plt.savefig(outfile, format=_format)
+        response = HttpResponse(outfile.getvalue(), content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(coolfilename(_format))
+        return response
+    elif interactive:
+        plot_html = mpld3.fig_to_html(fig)
+        return HttpResponse(plot_html)
+    else:
+        outfile = StringIO.StringIO()
+        plt.savefig(outfile, format="PNG", figsize=(8, 6), dpi=80)
+        return HttpResponse(outfile.getvalue(), content_type="image/png")
+
 def scatter_page(request):
     try:
         data = get_data(request)
@@ -221,7 +238,8 @@ def cf_page(request):
     return HttpResponse(get_template("cfplot.html").render(Context({"ploturl": plot_url})))
 def hist_page(request):
     plot_url = "../plot/" + request.get_full_path().split("/")[-1]
-    return HttpResponse(get_template("histogram.html").render(Context({"ploturl": plot_url})))
+    return HttpResponse(get_template("histogram.html").render(Context({"ploturl": plot_url, "table": request.GET['table'], "cols": request.GET['cols'],
+        "filter": getfilter(request)})))
 
 def plot(request):
     # TODO support different plot types
@@ -309,21 +327,7 @@ def scatter(request):
             ys= np.polynomial.polynomial.polyval(xs, poly)
             plt.plot(xs,ys,'r-')
 
-    if "download" in request.GET:
-        # Prepare the plot for download
-        _format = request.GET['download']
-        outfile = StringIO.StringIO()
-        plt.savefig(outfile, format=_format)
-        response = HttpResponse(outfile.getvalue(), content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename="{}"'.format(coolfilename(_format))
-        return response
-    elif interactive:
-        plot_html = mpld3.fig_to_html(fig)
-        return HttpResponse(plot_html)
-    else:
-        outfile = StringIO.StringIO()
-        plt.savefig(outfile, format="PNG", figsize=(8, 6), dpi=80)
-        return HttpResponse(outfile.getvalue(), content_type="image/png")
+    return serve(request, interactive)
 
 def hist(request):
     nbins = 10
@@ -341,19 +345,32 @@ def hist(request):
     fig = plt.figure(1)
     fig.clear()
     ax = fig.add_subplot(111)
+
+    if "scale" in request.GET:
+        ax.set_yscale(request.GET['scale'])
+
+    if "title" in request.GET:
+        if request.GET['title']:
+            plt.title(request.GET['title'])
+
+    if "xlabel" in request.GET:
+        ax.set_xlabel(request.GET['xlabel'])
+    if "ylabel" in request.GET:
+        ax.set_ylabel(request.GET['ylabel'])
+
     plt.hist(xvals, nbins)
 
-    plot_html = mpld3.fig_to_html(fig)
+    #plot_html = mpld3.fig_to_html(fig)
 
-    return HttpResponse(plot_html)
+    return serve(request, False)
 
 def cf(request):
     # Parse GET params
-    if not "table" in request.GET or not "col" in request.GET :
+    if not "table" in request.GET or not "cols" in request.GET :
         return error("Missing parameters (table and col must both be supplied)")
 
     table = request.GET['table']
-    col = request.GET['col']
+    col = request.GET['cols']
 
     # Read the specified columns from the table
     c = connection.cursor()
@@ -368,7 +385,7 @@ def cf(request):
     fig = plt.figure(1)
     fig.clear()
     ax = fig.add_subplot(111)
-    n,bins,patches = plt.hist(xvals, 100, histtype='step', cumulative=True)
+    n,bins,patches = plt.hist(xvals, 50, histtype='step', cumulative=True)
     patches[0].set_xy(patches[0].get_xy()[:-1])
 
     plot_html = mpld3.fig_to_html(fig)

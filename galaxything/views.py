@@ -235,7 +235,8 @@ def scatter_page(request):
 
 def cf_page(request):
     plot_url = "../plot/" + request.get_full_path().split("/")[-1]
-    return HttpResponse(get_template("cfplot.html").render(Context({"ploturl": plot_url})))
+    return HttpResponse(get_template("cfplot.html").render(Context({"ploturl": plot_url, "table": request.GET['table'], "cols": request.GET['cols'],
+        "filter": getfilter(request)})))
 def hist_page(request):
     plot_url = "../plot/" + request.get_full_path().split("/")[-1]
     return HttpResponse(get_template("histogram.html").render(Context({"ploturl": plot_url, "table": request.GET['table'], "cols": request.GET['cols'],
@@ -346,8 +347,43 @@ def hist(request):
     fig.clear()
     ax = fig.add_subplot(111)
 
-    if "scale" in request.GET:
-        ax.set_yscale(request.GET['scale'])
+    if "title" in request.GET:
+        if request.GET['title']:
+            plt.title(request.GET['title'])
+
+    if "xlabel" in request.GET:
+        ax.set_xlabel(request.GET['xlabel'])
+    if "ylabel" in request.GET:
+        ax.set_ylabel(request.GET['ylabel'])
+
+    scale = request.GET['scale'] if "scale" in request.GET else "linear"
+
+    if scale == "log":
+        plt.hist(xvals, bins = np.logspace(np.log10(min(xvals)), np.log10(max(xvals)), nbins))
+        ax.set_xscale("log")
+    else:
+        plt.hist(xvals, nbins)
+
+    #plot_html = mpld3.fig_to_html(fig)
+
+    return serve(request, False)
+
+def cf(request):
+    nbins = 50
+    if "nbins" in request.GET:
+        if type(eval(request.GET['nbins'])) == int:
+            nbins = int(request.GET['nbins'])
+
+    try:
+        data = get_data(request)
+    except Exception, e:
+        return error(str(e))
+
+    xvals = zip(*data)[0]
+
+    fig = plt.figure(1)
+    fig.clear()
+    ax = fig.add_subplot(111)
 
     if "title" in request.GET:
         if request.GET['title']:
@@ -358,34 +394,17 @@ def hist(request):
     if "ylabel" in request.GET:
         ax.set_ylabel(request.GET['ylabel'])
 
-    plt.hist(xvals, nbins)
+    scale = request.GET['scale'] if "scale" in request.GET else "linear"
 
-    #plot_html = mpld3.fig_to_html(fig)
+    if scale == "log":
+        ax.set_xscale("log")
 
-    return serve(request, False)
-
-def cf(request):
-    # Parse GET params
-    if not "table" in request.GET or not "cols" in request.GET :
-        return error("Missing parameters (table and col must both be supplied)")
-
-    table = request.GET['table']
-    col = request.GET['cols']
-
-    # Read the specified columns from the table
-    c = connection.cursor()
-    try:
-        c.execute("SELECT " + scrub(col) + " FROM " + scrub(table))
-    except OperationalError:
-        return error("Invalid table or column name")
-    data = c.fetchall()
-
-    xvals = zip(*data)[0]
-
-    fig = plt.figure(1)
-    fig.clear()
-    ax = fig.add_subplot(111)
-    n,bins,patches = plt.hist(xvals, 50, histtype='step', cumulative=True)
-    patches[0].set_xy(patches[0].get_xy()[:-1])
+        n,bins,patches = plt.hist(xvals, histtype = "step", cumulative = "True", bins = np.logspace( np.log10(min(xvals)), np.log10(max(xvals)), nbins ), normed=True )
+        # Get rid of dropping line at end of plot
+        patches[0].set_xy(patches[0].get_xy()[:-1])
+    else:
+        n,bins,patches = plt.hist(xvals, nbins, histtype = "step", cumulative = "True", normed = True)
+        # Get rid of dropping line at end of plot
+        patches[0].set_xy(patches[0].get_xy()[:-1])
 
     return serve(request, False)

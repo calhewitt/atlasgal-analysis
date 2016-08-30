@@ -38,9 +38,9 @@ tr a {
 <div id = "choose-title">Choose a table:</div>
 
 <table>
-{%for table in tables%}
+{%for key, value in tables%}
 <tr><td>
-<a href = "showtable/?table={{table.0}}">{{table.1}}</a>
+<a href = "showtable/?table={{key}}">{{value}}</a>
 </td></tr>
 {%endfor%}
 </table>

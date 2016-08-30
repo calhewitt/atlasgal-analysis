@@ -16,11 +16,16 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 from galaxything.views import *
+from django.contrib.auth import views as auth_views
+
+
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^showplot/', showplot),
     url(r'^plot/', plot),
     url(r'^showtable/', showtable),
-    url(r'^$', picktable)
+    url(r'^$', picktable),
+    url(r'^accounts/login/$', auth_views.login),
+    url(r'^accounts/logout/$', auth_views.logout)
 ]

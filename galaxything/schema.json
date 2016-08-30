@@ -1,4 +1,9 @@
 {
+  "tables": {
+    "atlasgal_full_csc_16oct14": "Compact Source Catalogue",
+    "gcsc_2016": "GaussClump Source Catalogue",
+    "atlasgal_full_csc_16oct14,cal_vlsr_distances": "CSC with Distances"
+  },
   "columns": {
     "atlas_name": ["Source Name", null, false],
     "gal_long_peak": ["Peak Longitude", "DEG", true],

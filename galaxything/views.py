@@ -15,6 +15,8 @@ import random
 import time
 import StringIO
 import sys
+from django.contrib.auth.decorators import login_required
+
 
 SCHEMA = json.loads(open(os.path.dirname(os.path.abspath(__file__)) + "/schema.json").read())
 
@@ -116,13 +118,10 @@ def get_columns(table):
     return col_titles
 
 # Live views
-
 def picktable(request):
-    c = connection.cursor()
-    c.execute("SELECT * FROM tables")
-    tables = c.fetchall()
+    tables = SCHEMA['tables']
     t = get_template("picktable.html")
-    html = t.render(Context({"tables": tables}))
+    html = t.render(Context({"tables": tables.items()}))
     return HttpResponse(html)
 
 def showtable(request):
@@ -156,12 +155,7 @@ def showtable(request):
             new_col_titles.append({"name": title, "oname": title, "unit": None, "plottable:": False})
 
     # Find the proper title given to the table
-    c.execute("SELECT title FROM tables WHERE name = \"" + table + "\"")
-    title = c.fetchone()
-    if not title:
-        title = table
-    else:
-        title = title[0]
+    title = SCHEMA['tables'][table]
 
     t = get_template('showtable.html')
     if filtertext == "":
@@ -369,7 +363,7 @@ def hist(request):
     return serve(request, False)
 
 def cf(request):
-    nbins = 50
+    nbins = 100
     if "nbins" in request.GET:
         if type(eval(request.GET['nbins'])) == int:
             nbins = int(request.GET['nbins'])
